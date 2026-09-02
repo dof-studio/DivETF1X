@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DivETF1X策略监控仪表板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-bg: #f8f9fa;
+            --dark-bg: #2c3e50;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            padding-top: 20px;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color), #1a2530);
+            color: white;
+            padding: 25px 0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .dashboard-header h1 {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .last-update {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+            margin-bottom: 25px;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            padding: 15px 20px;
+            border-bottom: none;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .strategy-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .strategy-1 {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: var(--secondary-color);
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .data-table thead th {
+            background-color: #f1f5f9;
+            border-bottom: 2px solid #dee2e6;
+            padding: 12px 15px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .data-table tbody td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .data-table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .indicator-value {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+        
+        .indicator-1 {
+            background-color: #27ae60;
+            color: white;
+        }
+        
+        .indicator-0 {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .decision-text {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .metrics-table td {
+            font-weight: 500;
+        }
+        
+        .metrics-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .monitor-image-container {
+            text-align: center;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+        
+        .monitor-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 5px;
+        }
+        
+        .refresh-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+        
+        .last-refresh {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .info-panel {
+            background-color: #e8f4fc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--secondary-color);
+        }
+        
+        .info-title {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background-color: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+        
+        .status-inactive {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .error-message {
+            background-color: #ffeaea;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #d63031;
+        }
+        
+        .error-message i {
+            margin-right: 10px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--primary-color);
+            font-weight: 600;
+            border: none;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--secondary-color);
+            border-bottom-color: var(--secondary-color);
+            background-color: transparent;
+        }
+        
+        .tab-content {
+            padding-top: 20px;
+        }
+        
+        #dynamic-chart {
+            width: 100%;
+            height: 520px;
+        }
+        
+        .date-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .date-filter label {
+            font-weight: 600;
+            margin-right: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 15px;
+            }
+            
+            .dashboard-header {
+                padding: 15px 0;
+            }
+            
+            .strategy-indicator {
+                display: block;
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            #dynamic-chart {
+                height: 400px;
+            }
+            
+            .date-filter {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- 仪表板标题区域 -->
+        <div class="dashboard-header">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="fas fa-chart-line me-2"></i>DivETF1X策略监控仪表板</h1>
+                        <p class="last-update mb-0">最后更新: <span id="last-update-time">加载中...</span></p>
+                    </div>
+                    <div>
+                        <button class="refresh-btn" id="refresh-data">
+                            <i class="fas fa-sync-alt me-2"></i>刷新数据
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+            <!-- 介绍和简评区域 -->
+            <div id="info-section">
+                <!-- 动态加载info.json内容 -->
+            </div>
+            
+            <div class="row">
+                <!-- 左侧: 绘图与指标表格 -->
+                <div class="col-lg-8">
+                    <!-- 策略绘图（双Tab） -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-chart-bar me-2"></i>策略绘图与回测表现
+                        </div>
+                        <div class="card-body">
+                            <!-- Tab 导航 -->
+                            <ul class="nav nav-tabs" id="strategyTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="dynamic-tab" data-bs-toggle="tab" data-bs-target="#dynamic" type="button" role="tab" aria-selected="false">
+                                        <i class="fas fa-candlestick-chart me-1"></i>动态图
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="static-tab" data-bs-toggle="tab" data-bs-target="#static" type="button" role="tab" aria-selected="true">
+                                        <i class="fas fa-image me-1"></i>静态图
+                                    </button>
+                                </li>
+                            </ul>
+                            
+                            <!-- Tab 内容 -->
+                            <div class="tab-content" id="strategyTabsContent">
+                                <!-- 动态图 -->
+                                <div class="tab-pane fade" id="dynamic" role="tabpanel" aria-labelledby="dynamic-tab">
+                                    <h6 class="text-center mb-3">DivETF1X 动态K线图</h6>
+                                    <!-- 日期筛选栏 -->
+                                    <div class="date-filter">
+                                        <label for="start-date">开始日期:</label>
+                                        <input type="date" id="start-date" class="form-control form-control-sm">
+                                        <label for="end-date">结束日期:</label>
+                                        <input type="date" id="end-date" class="form-control form-control-sm">
+                                        <button class="btn btn-sm btn-primary" id="apply-date-filter">筛选</button>
+                                        <button class="btn btn-sm btn-secondary" id="clear-date-filter">清除</button>
+                                    </div>
+                                    <div id="dynamic-chart"></div>
+                                    <div class="last-refresh mt-2">动态数据最后更新: <span id="dynamic-update-time">-</span></div>
+                                </div>
+                                <!-- 静态图 -->
+                                <div class="tab-pane fade show active" id="static" role="tabpanel" aria-labelledby="static-tab">
+                                    <div class="monitor-image-container">
+                                        <img id="hplot-image" src="hplot.png" alt="静态策略曲线图" class="monitor-image">
+                                        <div class="last-refresh mt-2">图片最后更新: <span id="image-update-time">-</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 策略说明 -->
+                            <div class="mt-4">
+                                <h5 class="info-title">策略说明</h5>
+                                <div class="d-flex flex-wrap">
+                                    <div class="strategy-indicator strategy-1">DivETF1X 单一策略</div>
+                                </div>
+                                <p class="mt-3 mb-0">
+                                    <small><strong>指标说明:</strong> Decision = 1 表示做多，Decision = 0 表示空仓。</small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 动态日度指标数据表 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-table me-2"></i>动态日度指标数据
+                        </div>
+                        <div class="card-body">
+                            <!-- 新增日期筛选栏 -->
+                            <div class="date-filter">
+                                <label for="factors-start-date">开始日期:</label>
+                                <input type="date" id="factors-start-date" class="form-control form-control-sm">
+                                <label for="factors-end-date">结束日期:</label>
+                                <input type="date" id="factors-end-date" class="form-control form-control-sm">
+                                <button class="btn btn-sm btn-primary" id="apply-factors-filter">筛选</button>
+                                <button class="btn btn-sm btn-secondary" id="clear-factors-filter">清除</button>
+                            </div>
+                            <div id="factors-error" class="error-message" style="display: none;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span id="factors-error-msg"></span>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="factors-table" class="table table-hover data-table">
+                                    <thead>
+                                        <tr id="factors-header">
+                                            <!-- 动态生成表头 -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="factors-data">
+                                        <!-- 动态加载数据 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="legend mt-3">
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background-color: #27ae60;"></div>
+                                    <span>Decision = 1 (做多)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background-color: #e74c3c;"></div>
+                                    <span>Decision = 0 (空仓)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧: 绩效指标与其他信息 -->
+                <div class="col-lg-4">
+                    <!-- Metrics表格 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-chart-pie me-2"></i>组合绩效指标
+                        </div>
+                        <div class="card-body">
+                            <div id="metrics-error" class="error-message" style="display: none;">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span id="metrics-error-msg"></span>
+                            </div>
+                            <div class="table-responsive">
+                                <table id="metrics-table" class="table metrics-table">
+                                    <thead>
+                                        <tr id="metrics-header">
+                                            <!-- 动态生成表头 -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="metrics-data">
+                                        <!-- 动态加载CSV数据 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- 当前策略状态 -->
+                            <div class="mt-4">
+                                <h5 class="info-title">当前策略状态</h5>
+                                <div id="strategy-status">
+                                    <!-- 动态加载状态 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 数据源信息 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="fas fa-database me-2"></i>数据源信息
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-file-csv me-2"></i>wdata.csv</span>
+                                    <span class="status-badge status-inactive" id="wdata-status">未加载</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-file-csv me-2"></i>decsw.csv</span>
+                                    <span class="status-badge status-inactive" id="decsw-status">未加载</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-image me-2"></i>hplot.png</span>
+                                    <span class="status-badge status-inactive" id="hplot-status">未加载</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-file-csv me-2"></i>metrics.csv</span>
+                                    <span class="status-badge status-inactive" id="metrics-status">未加载</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><i class="fas fa-file-code me-2"></i>info.json</span>
+                                    <span class="status-badge status-inactive" id="info-status">未加载</span>
+                                </li>
+                            </ul>
+                            <div class="mt-3">
+                                <p class="mb-1"><small><strong>数据更新频率:</strong> 每交易日开盘收盘</small></p>
+                                <p class="mb-0"><small><strong>下次更新:</strong> 每交易日开盘收盘</small></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 页脚 -->
+            <div class="footer">
+                <p>© 2016-2025 Nathmath | MML Core Development Team | DOF Think Tank | 本仪表板数据仅供内部参考，不构成投资建议 | 最后更新: <span id="footer-update-time"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        // 全局变量
+        let lastRefreshTime = new Date();
+        let wdataData = [];
+        let decswData = [];
+        let aldnbsValue = null;
+        let chartInstance = null;
+        let filteredWdataData = []; // 用于日期筛选后的数据
+        let factorsDataTable = null; // 保存DataTable实例
+        
+        // 页面加载完成后初始化
+        $(document).ready(function() {
+            // 设置最后更新时间
+            updateTimeDisplay();
+            
+            // 加载所有数据
+            loadAllData();
+            
+            // 设置刷新按钮事件
+            $('#refresh-data').click(function() {
+                loadAllData();
+                $(this).html('<i class="fas fa-spinner fa-spin me-2"></i>刷新中...');
+                setTimeout(() => {
+                    $(this).html('<i class="fas fa-sync-alt me-2"></i>刷新数据');
+                }, 1000);
+            });
+            
+            // 每5分钟自动刷新数据
+            setInterval(loadAllData, 5 * 60 * 1000);
+            
+            // 窗口大小变化时重新渲染图表
+            window.addEventListener('resize', function() {
+                if (chartInstance) chartInstance.resize();
+            });
+            
+            // 监听 tab 切换，当切换到动态图时重新调整尺寸
+            $('#strategyTabs').on('shown.bs.tab', function(e) {
+                if (e.target.id === 'dynamic-tab' && chartInstance) {
+                    chartInstance.resize();
+                }
+            });
+            
+            // K线图日期筛选按钮事件
+            $('#apply-date-filter').click(function() {
+                applyDateFilter();
+            });
+            $('#clear-date-filter').click(function() {
+                $('#start-date').val('');
+                $('#end-date').val('');
+                filteredWdataData = wdataData.slice();
+                renderDynamicChart();
+            });
+            
+            // 表格日期筛选按钮事件
+            $('#apply-factors-filter').click(function() {
+                applyFactorsDateFilter();
+            });
+            $('#clear-factors-filter').click(function() {
+                $('#factors-start-date').val('');
+                $('#factors-end-date').val('');
+                // 清除DataTable的自定义过滤
+                if (factorsDataTable) {
+                    factorsDataTable.search('').draw();
+                }
+            });
+        });
+        
+        // 更新页面时间显示
+        function updateTimeDisplay() {
+            const now = new Date();
+            const formattedTime = now.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            
+            $('#last-update-time').text(formattedTime);
+            $('#footer-update-time').text(formattedTime);
+            $('#image-update-time').text(formattedTime);
+            $('#dynamic-update-time').text(formattedTime);
+            
+            lastRefreshTime = now;
+        }
+        
+        // 加载所有数据
+        function loadAllData() {
+            // 加载介绍信息
+            loadInfoJson();
+            
+            // 加载wdata.csv
+            loadWdataCsv();
+            
+            // 加载decsw.csv
+            loadDecswCsv();
+            
+            // 加载metrics.csv
+            loadMetricsCsv();
+            
+            // 加载hplot.png
+            loadHplotImage();
+            
+            // 更新时间显示
+            updateTimeDisplay();
+        }
+        
+        // 加载介绍信息
+        function loadInfoJson() {
+            $.ajax({
+                url: 'info.json',
+                dataType: 'json',
+                success: function(data) {
+                    let infoHtml = `
+                        <div class="info-panel">
+                            <div class="info-title">
+                                <i class="fas fa-info-circle me-2"></i>${data.title || '当日市场简评'}
+                            </div>
+                            <p>${data.comment || '今日市场整体表现平稳，策略信号显示多头偏好占主导。'}</p>
+                    `;
+                    
+                    if (data.indicators && data.indicators.length > 0) {
+                        infoHtml += '<div class="row">';
+                        data.indicators.forEach(indicator => {
+                            const trendClass = indicator.trend === 'up' ? 'text-success' : 
+                                             indicator.trend === 'down' ? 'text-danger' : 'text-warning';
+                            const trendIcon = indicator.trend === 'up' ? 'fa-arrow-up' : 
+                                            indicator.trend === 'down' ? 'fa-arrow-down' : 'fa-minus';
+                            
+                            infoHtml += `
+                                <div class="col-md-4 mb-2">
+                                    <div class="d-flex justify-content-between">
+                                        <span>${indicator.name}:</span>
+                                        <span class="${trendClass}">
+                                            <i class="fas ${trendIcon} me-1"></i>${indicator.value}
+                                        </span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        infoHtml += '</div>';
+                    }
+                    
+                    infoHtml += '</div>';
+                    
+                    $('#info-section').html(infoHtml);
+                    $('#info-status').removeClass('status-inactive').addClass('status-active').text('已加载');
+                },
+                error: function(xhr, status, error) {
+                    $('#info-section').html('');
+                    $('#info-status').removeClass('status-active').addClass('status-inactive').text('未找到');
+                }
+            });
+        }
+        
+        // 加载 wdata.csv
+        function loadWdataCsv() {
+            $.ajax({
+                url: 'wdata.csv',
+                dataType: 'text',
+                success: function(data) {
+                    wdataData = parseCsv(data);
+                    filteredWdataData = wdataData.slice(); // 初始化筛选数据为全部
+                    $('#wdata-status').removeClass('status-inactive').addClass('status-active').text('已加载');
+                    
+                    // 渲染动态图（如果数据已就绪）
+                    renderDynamicChart();
+                    
+                    // 尝试合并渲染表格（需要两个CSV都加载）
+                    if (decswData.length > 0) {
+                        renderMergedTable();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showError('factors', `加载wdata.csv失败: ${error}`);
+                    $('#wdata-status').removeClass('status-active').addClass('status-inactive').text('加载失败');
+                }
+            });
+        }
+        
+        // 加载 decsw.csv
+        function loadDecswCsv() {
+            $.ajax({
+                url: 'decsw.csv',
+                dataType: 'text',
+                success: function(data) {
+                    decswData = parseCsv(data);
+                    $('#decsw-status').removeClass('status-inactive').addClass('status-active').text('已加载');
+                    
+                    // 提取 ALDnBS（最后一行的非空值）
+                    aldnbsValue = null;
+                    for (let i = decswData.length - 1; i >= 0; i--) {
+                        if (decswData[i].ALDnBS !== undefined && decswData[i].ALDnBS !== '') {
+                            aldnbsValue = parseFloat(decswData[i].ALDnBS);
+                            break;
+                        }
+                    }
+                    
+                    // 更新动态图（加入横线）
+                    renderDynamicChart();
+                    
+                    // 合并渲染表格（需两个CSV都加载）
+                    if (wdataData.length > 0) {
+                        renderMergedTable();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    showError('factors', `加载decsw.csv失败: ${error}`);
+                    $('#decsw-status').removeClass('status-active').addClass('status-inactive').text('加载失败');
+                }
+            });
+        }
+        
+        // 解析CSV为对象数组
+        function parseCsv(text) {
+            const rows = text.trim().split('\n');
+            if (rows.length < 2) return [];
+            
+            const headers = rows[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].trim() === '') continue;
+                const cells = rows[i].split(',').map(c => c.trim());
+                const obj = {};
+                headers.forEach((header, index) => {
+                    obj[header] = cells[index] !== undefined ? cells[index] : '';
+                });
+                data.push(obj);
+            }
+            return data;
+        }
+        
+        // 计算移动平均线
+        function calculateMA(data, period) {
+            const ma = [];
+            for (let i = 0; i < data.length; i++) {
+                if (i < period - 1) {
+                    ma.push('-');
+                } else {
+                    let sum = 0;
+                    for (let j = 0; j < period; j++) {
+                        sum += parseFloat(data[i - j].close);
+                    }
+                    ma.push((sum / period).toFixed(3)); // 保留3位小数
+                }
+            }
+            return ma;
+        }
+        
+        // 应用K线图日期筛选
+        function applyDateFilter() {
+            const start = $('#start-date').val();
+            const end = $('#end-date').val();
+            
+            if (!start && !end) {
+                // 无筛选，恢复全部数据（但保留默认180时点缩放）
+                filteredWdataData = wdataData.slice();
+            } else {
+                filteredWdataData = wdataData.filter(row => {
+                    const date = row.date.substring(0, 10); // 提取日期部分 YYYY-MM-DD
+                    if (start && end) {
+                        return date >= start && date <= end;
+                    } else if (start) {
+                        return date >= start;
+                    } else if (end) {
+                        return date <= end;
+                    }
+                    return true;
+                });
+            }
+            
+            renderDynamicChart();
+        }
+        
+        // 渲染动态K线图
+        function renderDynamicChart() {
+            if (wdataData.length === 0) return;
+            if (!filteredWdataData || filteredWdataData.length === 0) {
+                // 如果筛选后无数据，显示空白或提示
+                if (chartInstance) chartInstance.clear();
+                return;
+            }
+            
+            // 确保图表容器有尺寸
+            if ($('#dynamic').hasClass('active')) {
+                if (!chartInstance) {
+                    chartInstance = echarts.init(document.getElementById('dynamic-chart'));
+                }
+                chartInstance.resize();
+            } else {
+                if (!chartInstance) {
+                    chartInstance = echarts.init(document.getElementById('dynamic-chart'));
+                }
+            }
+            
+            const data = filteredWdataData;
+            const dates = data.map(row => row.date);
+            const candleData = data.map(row => [
+                parseFloat(row.open),
+                parseFloat(row.close),
+                parseFloat(row.low),
+                parseFloat(row.high)
+            ]);
+            
+            // 计算均线（基于筛选后的数据）
+            const ma5 = calculateMA(data, 5);
+            const ma10 = calculateMA(data, 10);
+            const ma20 = calculateMA(data, 20);
+            
+            // 判断是否处于日期筛选状态
+            const start = $('#start-date').val();
+            const end = $('#end-date').val();
+            const hasFilter = (start !== '' || end !== '');
+            
+            // 默认显示最后180个时点（仅当未筛选时）
+            const totalPoints = data.length;
+            const defaultPoints = 180;
+            let startPercent = 0;
+            if (!hasFilter && totalPoints > defaultPoints) {
+                startPercent = ((totalPoints - defaultPoints) / totalPoints * 100);
+            } else {
+                startPercent = 0;
+            }
+            
+            const option = {
+                title: {
+                    text: 'DivETF1X 动态K线图',
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 16,
+                        fontWeight: 'bold'
+                    }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        crossStyle: { color: '#999' }
+                    },
+                    formatter: function(params) {
+                        let result = params[0].axisValue + '<br/>';
+                        params.forEach(function(item) {
+                            if (item.seriesName === 'K线') {
+                                result += '开盘: ' + item.data[0].toFixed(3) + '<br/>';
+                                result += '收盘: ' + item.data[1].toFixed(3) + '<br/>';
+                                result += '最低: ' + item.data[2].toFixed(3) + '<br/>';
+                                result += '最高: ' + item.data[3].toFixed(3) + '<br/>';
+                            } else if (item.seriesName === 'MA5' || item.seriesName === 'MA10' || item.seriesName === 'MA20') {
+                                result += item.seriesName + ': ' + item.value + '<br/>';
+                            }
+                        });
+                        return result;
+                    }
+                },
+                grid: [
+                    { left: '10%', right: '10%', top: '15%', height: '55%' }
+                ],
+                xAxis: [
+                    {
+                        type: 'category',
+                        data: dates,
+                        gridIndex: 0,
+                        axisLine: { lineStyle: { color: '#333' } },
+                        axisLabel: {
+                            formatter: function(value) {
+                                return value;
+                            }
+                        }
+                    }
+                ],
+                yAxis: [
+                    {
+                        gridIndex: 0,
+                        scale: true,
+                        splitArea: { show: true },
+                        axisLabel: {
+                            formatter: function(value) {
+                                return value.toFixed(3); // 保留3位小数
+                            }
+                        }
+                    }
+                ],
+                dataZoom: [
+                    {
+                        type: 'inside',
+                        xAxisIndex: [0],
+                        start: startPercent,
+                        end: 100
+                    },
+                    {
+                        type: 'slider',
+                        xAxisIndex: [0],
+                        start: startPercent,
+                        end: 100,
+                        bottom: '5%'
+                    }
+                ],
+                series: [
+                    {
+                        name: 'K线',
+                        type: 'candlestick',
+                        data: candleData,
+                        itemStyle: {
+                            color: '#ef232a',      // 阳线（红）
+                            color0: '#14b143',     // 阴线（绿）
+                            borderColor: '#ef232a',
+                            borderColor0: '#14b143'
+                        },
+                        markLine: {
+                            silent: true,
+                            symbol: 'none',
+                            lineStyle: {
+                                color: '#ff0000',
+                                width: 2
+                            },
+                            label: {
+                                formatter: 'ALDnBS: ' + (aldnbsValue !== null ? aldnbsValue.toFixed(3) : ''),
+                                position: 'insideEndTop'
+                            },
+                            data: aldnbsValue !== null ? [{ yAxis: aldnbsValue }] : []
+                        }
+                    },
+                    {
+                        name: 'MA5',
+                        type: 'line',
+                        data: ma5,
+                        smooth: true,
+                        lineStyle: { width: 1.5, color: '#f39c12' },
+                        symbol: 'none'
+                    },
+                    {
+                        name: 'MA10',
+                        type: 'line',
+                        data: ma10,
+                        smooth: true,
+                        lineStyle: { width: 1.5, color: '#3498db' },
+                        symbol: 'none'
+                    },
+                    {
+                        name: 'MA20',
+                        type: 'line',
+                        data: ma20,
+                        smooth: true,
+                        lineStyle: { width: 1.5, color: '#9b59b6' },
+                        symbol: 'none'
+                    }
+                ],
+                legend: {
+                    data: ['K线', 'MA5', 'MA10', 'MA20'],
+                    top: '5%'
+                }
+            };
+            
+            chartInstance.setOption(option, true);
+            if ($('#dynamic').hasClass('active')) {
+                chartInstance.resize();
+            }
+        }
+        
+        // 加载 hplot.png（静态图）
+        function loadHplotImage() {
+            const img = $('#hplot-image');
+            const timestamp = new Date().getTime();
+            img.attr('src', 'hplot.png?t=' + timestamp);
+            
+            img.on('error', function() {
+                $('#hplot-status').removeClass('status-active').addClass('status-inactive').text('加载失败');
+            });
+            
+            img.on('load', function() {
+                $('#hplot-status').removeClass('status-inactive').addClass('status-active').text('已加载');
+            });
+        }
+        
+        // 加载 Metrics 数据（已转置）
+        function loadMetricsCsv() {
+            $.ajax({
+                url: 'metrics.csv',
+                dataType: 'text',
+                success: function(data) {
+                    const rows = data.split('\n');
+                    if (rows.length === 0) {
+                        showError('metrics', 'CSV文件为空');
+                        return;
+                    }
+                    
+                    // 解析表头：第一列是策略名称，其余列是指标名（首列可能为空）
+                    const headerCells = rows[0].split(',').map(h => h.trim());
+                    const metricNames = headerCells.slice(1); // 跳过第一列（策略列）
+                    
+                    // 收集策略数据
+                    const strategyData = [];
+                    for (let i = 1; i < rows.length; i++) {
+                        if (rows[i].trim() === '') continue;
+                        const cells = rows[i].split(',').map(c => c.trim());
+                        const strategyName = cells[0] || '';
+                        const values = cells.slice(1); // 指标值
+                        strategyData.push({ name: strategyName, values: values });
+                    }
+                    
+                    // 转置：以指标为行，策略为列
+                    // 生成表头：第一列是"指标"，后面是各策略名
+                    let headerHtml = '<th>指标</th>';
+                    strategyData.forEach(strategy => {
+                        headerHtml += `<th>${strategy.name}</th>`;
+                    });
+                    $('#metrics-header').html(headerHtml);
+                    
+                    // 生成表格内容：每个指标一行
+                    let tableHtml = '';
+                    metricNames.forEach((metricName, idx) => {
+                        let rowHtml = `<tr><td>${metricName}</td>`;
+                        strategyData.forEach(strategy => {
+                            const rawValue = strategy.values[idx] !== undefined ? strategy.values[idx] : '';
+                            let displayValue = rawValue;
+                            
+                            try {
+                                const numValue = parseFloat(rawValue);
+                                if (!isNaN(numValue)) {
+                                    // 根据指标名智能格式化
+                                    if (metricName.toLowerCase().includes('return') || 
+                                        metricName.toLowerCase().includes('volatility') || 
+                                        metricName.toLowerCase().includes('drawdown') ||
+                                        metricName.toLowerCase().includes('rate') ||
+                                        metricName.toLowerCase().includes('win')) {
+                                        // 若数值小于1，显示为百分比
+                                        if (numValue < 1) {
+                                            displayValue = (numValue * 100).toFixed(2) + '%';
+                                        } else {
+                                            displayValue = numValue.toFixed(2);
+                                        }
+                                    } else {
+                                        displayValue = numValue.toFixed(2);
+                                    }
+                                }
+                            } catch (e) {
+                                // 保持原值
+                            }
+                            
+                            rowHtml += `<td>${displayValue}</td>`;
+                        });
+                        rowHtml += '</tr>';
+                        tableHtml += rowHtml;
+                    });
+                    
+                    $('#metrics-data').html(tableHtml);
+                    
+                    $('#metrics-error').hide();
+                    $('#metrics-status').removeClass('status-inactive').addClass('status-active').text('已加载');
+                },
+                error: function(xhr, status, error) {
+                    showError('metrics', `加载metrics.csv失败: ${error}`);
+                }
+            });
+        }
+        
+        // 合并 wdata 和 decsw 并渲染表格
+        function renderMergedTable() {
+            if (wdataData.length === 0 || decswData.length === 0) return;
+            
+            // 设置表头
+            const headerHtml = '<th>Date</th><th>Close</th><th>Decision</th><th>ALDnBS</th>';
+            $('#factors-header').html(headerHtml);
+            
+            // 构建 decsw 查找表
+            const decswMap = {};
+            decswData.forEach(row => {
+                decswMap[row.date] = row;
+            });
+            
+            // 构建表格行
+            let tableHtml = '';
+            // 标记最后一行（最新数据）
+            const lastIndex = wdataData.length - 1;
+            
+            wdataData.forEach((row, index) => {
+                const date = row.date;
+                const close = parseFloat(row.close).toFixed(3);
+                const wDecision = row.decision;
+                const decswRow = decswMap[date];
+                
+                let decision, aldnbs = '';
+                if (decswRow) {
+                    decision = decswRow.decision;
+                    aldnbs = decswRow.ALDnBS || '';
+                } else {
+                    decision = wDecision === '1' ? '1' : '0';
+                }
+                
+                // 统一转换为 1 / 0
+                if (decision === 'Long') decision = '1';
+                else if (decision === 'Empty') decision = '0';
+                
+                // 生成决策徽章 + 文字（注意0 空仓之间加了一个空格）
+                let decisionCell = '';
+                if (decision === '1') {
+                    decisionCell = '<span class="indicator-value indicator-1">1</span><span class="decision-text" style="color:#27ae60;"> 做多</span>';
+                } else if (decision === '0') {
+                    decisionCell = '<span class="indicator-value indicator-0">0</span><span class="decision-text" style="color:#e74c3c;"> 空仓</span>';
+                } else {
+                    decisionCell = decision;
+                }
+                
+                // ALDnBS最新行高亮（红色）
+                let aldnbsCell = aldnbs;
+                if (index === lastIndex && aldnbs !== '') {
+                    aldnbsCell = `<span style="color:#c62828;font-weight:600;">${aldnbs}</span>`;
+                }
+                
+                tableHtml += `
+                    <tr>
+                        <td>${date}</td>
+                        <td>${close}</td>
+                        <td>${decisionCell}</td>
+                        <td>${aldnbsCell}</td>
+                    </tr>
+                `;
+            });
+            
+            $('#factors-data').html(tableHtml);
+            
+            // 初始化 DataTable
+            if ($.fn.DataTable.isDataTable('#factors-table')) {
+                $('#factors-table').DataTable().destroy();
+            }
+            
+            factorsDataTable = $('#factors-table').DataTable({
+                order: [[0, 'desc']],
+                pageLength: 10,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/zh-CN.json'
+                }
+            });
+            
+            // 更新策略状态
+            updateStrategyStatus();
+            
+            // 隐藏错误
+            $('#factors-error').hide();
+        }
+        
+        // 应用表格日期筛选
+        function applyFactorsDateFilter() {
+            const start = $('#factors-start-date').val();
+            const end = $('#factors-end-date').val();
+            
+            if (!factorsDataTable) return;
+            
+            // 自定义DataTable过滤
+            $.fn.dataTable.ext.search.push(
+                function(settings, data, dataIndex) {
+                    if (settings.nTable.id !== 'factors-table') return true;
+                    
+                    const date = data[0]; // 第一列是日期
+                    const dateOnly = date.substring(0, 10); // 提取 YYYY-MM-DD
+                    
+                    if (start && end) {
+                        return dateOnly >= start && dateOnly <= end;
+                    } else if (start) {
+                        return dateOnly >= start;
+                    } else if (end) {
+                        return dateOnly <= end;
+                    }
+                    return true; // 无筛选条件
+                }
+            );
+            
+            factorsDataTable.draw();
+        }
+        
+        // 更新策略状态
+        function updateStrategyStatus() {
+            if (wdataData.length === 0 || decswData.length === 0) {
+                $('#strategy-status').html('<div class="error-message"><i class="fas fa-exclamation-circle"></i>数据尚未完全加载</div>');
+                return;
+            }
+            
+            const lastRow = wdataData[wdataData.length - 1];
+            const decswRow = decswData[decswData.length - 1];
+            let decision = decswRow ? decswRow.decision : (lastRow.decision === '1' ? '1' : '0');
+            if (decision === 'Long') decision = '1';
+            else if (decision === 'Empty') decision = '0';
+            const aldnbs = decswRow ? decswRow.ALDnBS : '';
+            
+            const decisionText = decision === '1' ? '做多' : '空仓';
+            const statusHtml = `
+                <div class="d-flex justify-content-between mb-2">
+                    <span>当前决策:</span>
+                    <span class="status-badge ${decision === '1' ? 'status-active' : 'status-inactive'}">${decisionText}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>ALDnBS:</span>
+                    <span class="status-badge status-inactive">${aldnbs || '暂无'}</span>
+                </div>
+            `;
+            
+            $('#strategy-status').html(statusHtml);
+        }
+        
+        // 显示错误信息
+        function showError(type, message) {
+            const errorDiv = $(`#${type}-error`);
+            const errorMsg = $(`#${type}-error-msg`);
+            
+            errorMsg.text(message);
+            errorDiv.show();
+            
+            if (type === 'factors') {
+                $('#wdata-status').removeClass('status-active').addClass('status-inactive').text('加载失败');
+                $('#decsw-status').removeClass('status-active').addClass('status-inactive').text('加载失败');
+            } else if (type === 'metrics') {
+                $('#metrics-status').removeClass('status-active').addClass('status-inactive').text('加载失败');
+                $('#metrics-header').html('');
+                $('#metrics-data').html('');
+            }
+        }
+    </script>
+</body>
+</html>
