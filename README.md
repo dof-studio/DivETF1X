@@ -4,8 +4,8 @@ DivETF1X Strategy - Automatically updated official factor release. You can see t
 
 # Access to Our Data
 
-Please access [DivETF1X Homepage](https://dof-studio.github.io/SPYDL1D/index.html) to view our latest release.</br>
-请访问[DivETF1X 主页](https://dof-studio.github.io/SPYDL1D/index.html)以获取我们的最新更新。</br>
+Please access [DivETF1X Homepage](https://dof-studio.github.io/DivETF1X/) to view our latest release.</br>
+请访问[DivETF1X 主页](https://dof-studio.github.io/DivETF1X/)以获取我们的最新更新。</br>
 
 **什么是DivETF1X**
 
